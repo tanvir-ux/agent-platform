@@ -75,7 +75,8 @@ This table is the honest status of the repository as published. "Mock model" mea
 | Live LLM (Gemini `gemini-3.1-flash-lite`, free tier) | **Partly executed.** Only the OpenAI Agents SDK completed a live run. LangGraph, Microsoft Agent Framework and AutoGen returned HTTP 400 from Google's OpenAI-compatible endpoint (probably the Gemini 3 thought-signature requirement); Semantic Kernel hit a quota error and Google ADK a 503. Details: [`docs/demo/live-gemini.txt`](docs/demo/live-gemini.txt). The other frameworks are mock-verified only |
 | Langfuse and LangSmith hooks | **Unit-tested with fake SDKs only.** Never sent to the hosted services |
 | Hosted demo on GitHub Pages | **Recorded replay** of real runs (see below). It is not a live backend |
-| Docker image, Hugging Face Space script | **Written but not executed** (no Docker daemon or Hugging Face token was available when this was built). The pinned dependency set was verified by installing it into a clean virtual environment and running the tests |
+| Docker image | **Executed in GitHub Actions**: the CI job builds the image, starts it and checks `/api/health` and a `/api/run` call |
+| Hugging Face Space publish script (`deploy/huggingface`) | **Written but not executed** (no Hugging Face token was available when this was built) |
 
 ## The hosted demo
 
