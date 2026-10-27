@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-platform"
+version = "0.1.0"
+description = "One task, seven agent frameworks: FastAPI + FastMCP + A2A with LangGraph, Google ADK, OpenAI Agents SDK, Microsoft Agent Framework, AutoGen, Semantic Kernel and CrewAI behind one interface."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Md Tanvir Alam", email = "tanviralamshuvo@gmail.com" }]
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+  "httpx>=0.27",
+  "pydantic>=2.8",
+  "fastmcp>=3.0,<5",
+  "a2a-sdk>=1.2,<2",
+  "langfuse>=4,<6",
+  "langsmith>=0.4",
+]
+
+[project.optional-dependencies]
+# Everything except CrewAI (CrewAI pins an older fastmcp/openai/pydantic set, so it has its own env).
+frameworks = [
+  "langgraph>=1.2",
+  "langchain-core>=1.0",
+  "langchain-openai>=1.0",
+  "google-adk>=2.13",
+  "openai-agents>=0.24",
+  "agent-framework-core>=1.23",
+  "agent-framework-openai>=1.17",
+  "autogen-agentchat>=0.7.5",
+  "autogen-ext[openai]>=0.7.5",
+  "semantic-kernel>=1.45",
+]
+crewai = ["crewai>=1.15"]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.6"]
+
+[project.scripts]
+agent-platform = "agent_platform.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_platform"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning", "ignore::UserWarning", "ignore::pydantic.warnings.PydanticDeprecatedSince20"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>agent-platform: one task, eight agent setups</title>
+<style>
+  :root { --ink:#16202a; --muted:#5b6b7a; --line:#dde4ea; --bg:#f5f8fb; --card:#fff; --brand:#2457d6; --ok:#117a4d; --warn:#9a5b00; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  header { background:#0f2747; color:#fff; padding:28px 20px; }
+  header .in, main { max-width:1040px; margin:0 auto; padding:0 16px; }
+  h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:0; color:#c8d6ea; max-width:760px; }
+  main { padding-top:20px; padding-bottom:48px; display:grid; gap:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; }
+  .card h2 { margin:0 0 8px; font-size:18px; }
+  .explain { border-left:4px solid var(--brand); }
+  .explain ol { margin:6px 0 0 18px; padding:0; }
+  .pill { display:inline-block; padding:2px 10px; border-radius:999px; font-size:13px; border:1px solid var(--line); background:#eef3fa; color:var(--ink); }
+  .pill.live { background:#e4f6ec; color:var(--ok); border-color:#bfe6d0; }
+  .pill.replay { background:#fff4e0; color:var(--warn); border-color:#f2d9a8; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
+  button { font:inherit; cursor:pointer; border:1px solid var(--line); background:#fff; border-radius:8px; padding:7px 12px; color:var(--ink); }
+  button:hover { border-color:var(--brand); }
+  button.sel { background:var(--brand); color:#fff; border-color:var(--brand); }
+  button.primary { background:var(--brand); color:#fff; border-color:var(--brand); font-weight:600; }
+  button:disabled { opacity:.5; cursor:wait; }
+  input[type=text] { width:100%; font:inherit; padding:10px 12px; border:1px solid var(--line); border-radius:8px; }
+  .answer { background:#f0f6ff; border:1px solid #cfe0fb; border-radius:8px; padding:12px; white-space:pre-wrap; }
+  .meta { color:var(--muted); font-size:14px; margin-top:6px; }
+  .flow { display:flex; flex-wrap:wrap; align-items:stretch; gap:10px; margin-top:10px; }
+  .node { border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff; min-width:150px; max-width:300px; font-size:13px; }
+  .node b { display:block; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:2px; }
+  .node.user { background:#eef3fa; } .node.llm { background:#f3edff; } .node.tool { background:#e9f7ef; } .node.answer { background:#fff4e0; }
+  .stack { display:flex; flex-direction:column; gap:6px; }
+  .arrow { align-self:center; color:var(--muted); font-size:20px; }
+  code { background:#eef3fa; padding:1px 5px; border-radius:4px; font-size:13px; word-break:break-word; }
+  table { border-collapse:collapse; width:100%; font-size:14px; } td,th { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); }
+  footer { color:var(--muted); font-size:14px; }
+  a { color:var(--brand); }
+</style>
+</head>
+<body>
+<header><div class="in">
+  <h1>agent-platform</h1>
+  <p>One customer-support task, solved by eight different AI-agent setups. Pick a question, pick a framework, press Run, and watch what the agent actually did.</p>
+</div></header>
+<main>
+  <section class="card explain">
+    <h2>What you are looking at</h2>
+    <p>An <b>AI agent</b> is a program that reads a request, decides which tools to use (for example "look up an order"), uses them, and then writes an answer. Companies build agents with different frameworks. Here, <b>the same agent job is built eight ways</b> (LangGraph, Google ADK, OpenAI Agents SDK, Microsoft Agent Framework, AutoGen, Semantic Kernel, CrewAI, and one that fetches its tools over the MCP protocol). They all give the same answer, which proves they are interchangeable behind one interface.</p>
+    <ol>
+      <li>Choose an example question.</li>
+      <li>Choose a framework (or run all of them).</li>
+      <li>The flow diagram shows the steps: the question, the model planning, the tool calls, and the final answer.</li>
+    </ol>
+    <p class="meta">The "model" is a deterministic stand-in (no AI cost, no randomness), so every run is repeatable. The framework code, tool calls and message handling are the real thing. <span id="modepill" class="pill">checking…</span></p>
+  </section>
+
+  <section class="card">
+    <h2>1. Pick a question</h2>
+    <div class="row" id="examples"></div>
+    <input type="text" id="prompt" aria-label="Question" maxlength="300">
+    <p class="meta" id="promptnote"></p>
+    <h2 style="margin-top:14px">2. Pick a framework</h2>
+    <div class="row" id="frameworks"></div>
+    <div class="row">
+      <button class="primary" id="run">Run selected framework</button>
+      <button id="runall">Run all frameworks and compare</button>
+    </div>
+  </section>
+
+  <section class="card" id="resultcard" hidden>
+    <h2>3. Result</h2>
+    <div id="result"></div>
+  </section>
+
+  <section class="card" id="comparecard" hidden>
+    <h2>Comparison</h2>
+    <table id="compare"><thead><tr><th>Framework</th><th>Answer</th><th>Tool calls</th><th>Time</th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section class="card">
+    <h2>What is real and what is simulated</h2>
+    <ul>
+      <li><b>Real:</b> each framework's own agent loop, tool wiring, and the MCP and A2A protocol servers.</li>
+      <li><b>Simulated:</b> the language model is a rule-based stand-in so the demo is free and repeatable. The same code can talk to a real model by changing one setting.</li>
+      <li id="replaynote" hidden><b>This page is a recorded replay.</b> Each result shown was produced by actually running that framework (recordings are stored in <code>recordings.json</code>). Free-text questions need a running server; use the four examples here, or run the Docker image locally.</li>
+    </ul>
+  </section>
+  <footer>Source code, tests and architecture diagram: <a id="repo" href="https://github.com/tanvir-ux/agent-platform">github.com/tanvir-ux/agent-platform</a></footer>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+let live = false, recordings = {}, frameworks = [], selected = null, examples = [];
+const LABELS = {langgraph:"LangGraph", google_adk:"Google ADK", openai_agents:"OpenAI Agents SDK", msaf:"Microsoft Agent Framework",
+  openai_agents_mcp:"OpenAI Agents SDK + MCP", autogen:"AutoGen", semantic_kernel:"Semantic Kernel", crewai:"CrewAI"};
+
+async function init() {
+  try {
+    const r = await fetch("api/frameworks"); if (!r.ok) throw 0;
+    const j = await r.json(); live = true; examples = j.examples; frameworks = Object.keys(j.available);
+  } catch (e) { live = false; }
+  if (!live) {
+    const r = await fetch("recordings.json"); recordings = await r.json();
+    examples = recordings.prompts; frameworks = recordings.frameworks;
+    $("replaynote").hidden = false;
+  }
+  $("modepill").textContent = live ? "Live server (mock model)" : "Recorded replay";
+  $("modepill").className = "pill " + (live ? "live" : "replay");
+  $("examples").innerHTML = ""; examples.forEach((p) => {
+    const b = document.createElement("button"); b.textContent = p; b.onclick = () => { $("prompt").value = p; };
+    $("examples").appendChild(b);
+  });
+  $("prompt").value = examples[0];
+  $("promptnote").textContent = live ? "" : "Replay mode: please choose one of the example questions above.";
+  frameworks.forEach((f, i) => {
+    const b = document.createElement("button"); b.textContent = LABELS[f] || f; b.dataset.f = f;
+    b.onclick = () => { selected = f; document.querySelectorAll("#frameworks button").forEach((x) => x.classList.toggle("sel", x === b)); };
+    $("frameworks").appendChild(b); if (i === 0) b.click();
+  });
+}
+
+async function runOne(f, prompt) {
+  if (live) {
+    const r = await fetch("api/run", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({framework:f, prompt, mode:"mock"})});
+    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+    return r.json();
+  }
+  const hit = recordings.runs.find((x) => x.framework === f && x.prompt === prompt);
+  if (!hit) throw new Error("Replay mode only contains the example questions.");
+  return hit;
+}
+
+function el(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; }
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+function flow(run) {
+  const wrap = el("div", "flow");
+  wrap.appendChild(el("div", "node user", "<b>1. Question</b>" + esc(run.prompt)));
+  let i = 0; const ev = run.trace; let step = 2;
+  while (i < ev.length) {
+    if (ev[i].kind === "llm") {
+      wrap.appendChild(el("div", "arrow", "→"));
+      const label = ev[i].decision === "tool_calls" ? "Model decides which tools to call" : "Model writes the answer";
+      wrap.appendChild(el("div", "node llm", `<b>${step++}. ${label}</b>` + (ev[i].decision === "tool_calls" ? esc(ev[i].detail) : "")));
+      i++;
+    } else {
+      const stack = el("div", "stack");
+      while (i < ev.length && ev[i].kind === "tool") {
+        const t = ev[i]; if (t.name !== "mcp.result") stack.appendChild(el("div", "node tool", `<b>Tool: ${esc(t.name.replace("tool.", ""))}</b><code>${esc(t.input)}</code>` + (t.name.startsWith("mcp.") ? "" : `<br>→ <code>${esc(t.output)}</code>`)));
+        i++;
+      }
+      if (stack.children.length) { wrap.appendChild(el("div", "arrow", "→")); wrap.appendChild(stack); }
+    }
+  }
+  wrap.appendChild(el("div", "arrow", "→"));
+  wrap.appendChild(el("div", "node answer", "<b>Final answer</b>" + esc(run.answer)));
+  return wrap;
+}
+
+function toolCount(run) { return run.trace.filter((e) => e.kind === "tool" && e.name !== "mcp.result").length; }
+
+$("run").onclick = async () => {
+  $("run").disabled = true; $("comparecard").hidden = true;
+  try {
+    const run = await runOne(selected, $("prompt").value.trim());
+    $("resultcard").hidden = false; const r = $("result"); r.innerHTML = "";
+    r.appendChild(el("div", "answer", esc(run.answer)));
+    r.appendChild(el("div", "meta", `${esc(run.label)} · ${run.duration_ms} ms · ${toolCount(run)} tool calls · model: ${esc(run.model)}${live ? "" : " · recorded run"}`));
+    r.appendChild(el("h3", "", "What the agent did, step by step"));
+    r.appendChild(flow(run));
+  } catch (e) { $("resultcard").hidden = false; $("result").innerHTML = `<div class="answer">${esc(e.message)}</div>`; }
+  $("run").disabled = false;
+};
+
+$("runall").onclick = async () => {
+  $("runall").disabled = true; const tb = document.querySelector("#compare tbody"); tb.innerHTML = ""; $("comparecard").hidden = false;
+  for (const f of frameworks) {
+    try {
+      const run = await runOne(f, $("prompt").value.trim());
+      const tr = el("tr", "", `<td>${esc(run.label)}</td><td>${esc(run.answer)}</td><td>${toolCount(run)}</td><td>${run.duration_ms} ms</td>`); tb.appendChild(tr);
+    } catch (e) { tb.appendChild(el("tr", "", `<td>${esc(LABELS[f] || f)}</td><td colspan="3">${esc(e.message)}</td>`)); }
+  }
+  $("runall").disabled = false;
+};
+init();
+</script>
+</body>
+</html>

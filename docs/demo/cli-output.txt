@@ -1,0 +1,38 @@
+$ agent-platform run all "Where is order 1042, and how much would I get back if I return it?"
+[LangGraph] (73 ms) Order 1042 (Wireless Headphones) is shipped, expected 2026-11-02. Policy: Refunds are available within 30 days of purchase. Opened electronics carry a 15% restocking fee. Unopened items are refunded in full. Estimated refund for order 1042: $120.00.
+[Google ADK] (186 ms) Order 1042 (Wireless Headphones) is shipped, expected 2026-11-02. Policy: Refunds are available within 30 days of purchase. Opened electronics carry a 15% restocking fee. Unopened items are refunded in full. Estimated refund for order 1042: $120.00.
+[OpenAI Agents SDK] (25 ms) Order 1042 (Wireless Headphones) is shipped, expected 2026-11-02. Policy: Refunds are available within 30 days of purchase. Opened electronics carry a 15% restocking fee. Unopened items are refunded in full. Estimated refund for order 1042: $120.00.
+[Microsoft Agent Framework] (15 ms) Order 1042 (Wireless Headphones) is shipped, expected 2026-11-02. Policy: Refunds are available within 30 days of purchase. Opened electronics carry a 15% restocking fee. Unopened items are refunded in full. Estimated refund for order 1042: $120.00.
+[OpenAI Agents SDK + MCP] (937 ms) Order 1042 (Wireless Headphones) is shipped, expected 2026-11-02. Policy: Refunds are available within 30 days of purchase. Opened electronics carry a 15% restocking fee. Unopened items are refunded in full. Estimated refund for order 1042: $120.00.
+[AutoGen] (19 ms) Order 1042 (Wireless Headphones) is shipped, expected 2026-11-02. Policy: Refunds are available within 30 days of purchase. Opened electronics carry a 15% restocking fee. Unopened items are refunded in full. Estimated refund for order 1042: $120.00.
+[Semantic Kernel] (21 ms) Order 1042 (Wireless Headphones) is shipped, expected 2026-11-02. Policy: Refunds are available within 30 days of purchase. Opened electronics carry a 15% restocking fee. Unopened items are refunded in full. Estimated refund for order 1042: $120.00.
+
+$ agent-platform run langgraph "Convert 120 USD to BDT." --trace
+[LangGraph] (74 ms) 120 USD is 14640 BDT.
+[
+  {
+    "i": 0,
+    "kind": "llm",
+    "name": "mock-support-planner",
+    "t_ms": 60.2,
+    "decision": "tool_calls",
+    "detail": "convert_currency({\"amount\": 120.0, \"from_currency\": \"USD\", \"to_currency\": \"BDT\"})"
+  },
+  {
+    "i": 1,
+    "kind": "tool",
+    "name": "tool.convert_currency",
+    "t_ms": 68.7,
+    "input": "{'amount': 120.0, 'from_currency': 'USD', 'to_currency': 'BDT'}",
+    "output": "{\"amount\": 120.0, \"from\": \"USD\", \"to\": \"BDT\", \"converted\": 14640.0}"
+  },
+  {
+    "i": 2,
+    "kind": "llm",
+    "name": "mock-support-planner",
+    "t_ms": 72.2,
+    "decision": "answer",
+    "detail": "120 USD is 14640 BDT."
+  }
+]
+[CrewAI] (417 ms) Order 1042 (Wireless Headphones) is shipped, expected 2026-11-02. Policy: Refunds are available within 30 days of purchase. Opened electronics carry a 15% restocking fee. Unopened items are refunded in full. Estimated refund for order 1042: $120.00.

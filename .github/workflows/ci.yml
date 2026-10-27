@@ -1,0 +1,48 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  main:
+    name: lint + tests (all frameworks except CrewAI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-frameworks.txt && pip install --no-deps -e . && pip install pytest pytest-asyncio ruff
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest -q
+
+  crewai:
+    name: tests (CrewAI)
+    runs-on: ubuntu-latest
+    env:
+      CREWAI_DISABLE_TELEMETRY: "true"
+      OTEL_SDK_DISABLED: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-crewai.txt && pip install --no-deps -e . && pip install pytest pytest-asyncio
+      - run: pytest -q
+
+  docker:
+    name: docker image builds and serves
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t agent-platform .
+      - run: |
+          docker run -d --name ap -p 7860:7860 agent-platform
+          for i in $(seq 1 30); do curl -sf localhost:7860/api/health && break || sleep 2; done
+          curl -sf localhost:7860/api/health
+          curl -sf -X POST localhost:7860/api/run -H 'content-type: application/json' \
+            -d '{"framework":"langgraph","prompt":"Convert 120 USD to BDT."}' | grep 14640

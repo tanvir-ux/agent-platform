@@ -1,0 +1,11 @@
+Live Gemini smoke test (server-side key, model gemini-3.1-flash-lite via Google's OpenAI-compatible endpoint)
+Run on 2026-10-27 (America/New_York), prompt: "Where is order 1042, and how much would I get back if I return it?"
+
+openai_agents      OK    ~13.8 s, correct answer from real tool calls
+langgraph          FAIL  HTTP 400 from the compatibility endpoint (Gemini 3 thought-signature round trip)
+msaf               FAIL  HTTP 400 (same cause)
+autogen            FAIL  HTTP 400 (same cause)
+semantic_kernel    FAIL  HTTP 429 (free-tier quota)
+google_adk         FAIL  HTTP 503 (model overloaded), retried at the end of the session with the same result
+
+Conclusion: live mode is verified for exactly one framework. The rest are mock-verified only.
